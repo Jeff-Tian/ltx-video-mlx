@@ -21,7 +21,6 @@ from pathlib import Path
 
 import mlx.core as mx
 import numpy as np
-from huggingface_hub import hf_hub_download
 
 from ltx_core_mlx.conditioning.types.keyframe_cond import VideoConditionByKeyframeIndex
 from ltx_core_mlx.conditioning.types.keyframe_slots import extract_generated_keyframes
@@ -31,6 +30,7 @@ from ltx_core_mlx.model.video_vae.tiling import TilingConfig
 from ltx_core_mlx.utils.ffmpeg import find_ffmpeg, find_ffprobe, probe_video_info
 from ltx_core_mlx.utils.memory import aggressive_cleanup
 from ltx_core_mlx.utils.positions import compute_video_positions
+from ltx_pipelines_mlx.utils.hf_download import hf_hub_download
 
 from ._base import BasePipeline
 from .dfr import decode_keyframes_from_slots

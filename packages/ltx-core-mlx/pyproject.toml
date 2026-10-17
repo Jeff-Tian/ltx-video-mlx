@@ -27,6 +27,10 @@ dependencies = [
     "mlx-lm>=0.31.0",
     "safetensors>=0.4.0",
     "huggingface-hub>=0.26.0",
+    # huggingface_hub downloads models through httpx. The `socks` extra pulls
+    # in socksio so weight downloads work when ALL_PROXY/HTTPS_PROXY point at a
+    # SOCKS proxy (httpx raises ImportError without it).
+    "httpx[socks]",
     "numpy>=1.26.0",
 ]
 

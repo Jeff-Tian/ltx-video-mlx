@@ -18,7 +18,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import mlx.core as mx
-from huggingface_hub import snapshot_download
 
 from ltx_core_mlx.model.transformer.model import LTXModel, LTXModelConfig
 from ltx_core_mlx.utils.memory import aggressive_cleanup
@@ -27,6 +26,11 @@ from ltx_core_mlx.utils.weights import (
     load_split_safetensors,
     validate_config_matches_weights,
 )
+
+# Resumable, retry-wrapped snapshot_download (see utils/hf_download.py).
+# Imported under the same name so call sites and tests patching
+# ``_orchestration.snapshot_download`` keep working.
+from ltx_pipelines_mlx.utils.hf_download import snapshot_download
 
 if TYPE_CHECKING:
     from ltx_core_mlx.loader.lora_adapters import AttachedLoras

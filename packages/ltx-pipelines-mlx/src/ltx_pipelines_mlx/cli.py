@@ -27,6 +27,12 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from ltx_pipelines_mlx.dfr import DEFAULT_DETAILING_LORA
+
+# Tunes the Hub download backend for resumable transfers behind SOCKS
+# proxies. Patches both env vars and huggingface_hub.constants, so it is
+# correct even though isort places it after other first-party imports
+# (see utils/hf_download.py).
+from ltx_pipelines_mlx.utils import hf_download as _hf_download  # noqa: F401
 from ltx_pipelines_mlx.utils.blocks import VIDEO_DECODER_CHOICES
 from ltx_pipelines_mlx.utils.hdr_media import EXRColorSpace
 from ltx_pipelines_mlx.utils.stepwise import DEFAULT_PREVIEW_FRAMES
@@ -2256,7 +2262,7 @@ def _cmd_info(args: argparse.Namespace) -> None:
     """Show model info and memory estimate."""
     from pathlib import Path
 
-    from huggingface_hub import snapshot_download
+    from ltx_pipelines_mlx.utils.hf_download import snapshot_download
 
     model_dir = Path(args.model)
     if not model_dir.exists():

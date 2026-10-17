@@ -333,6 +333,8 @@ See [docs/PIPELINES.md § Speed](docs/PIPELINES.md#speed) and [§ Memory](docs/P
 
 `LTX2_COMPUTE_DTYPE=float16` runs the DiT's attention and feed-forward in float16 (opt-in; on an M1 Max with the 2.5 q8 pack a 576×1024×241 `--distilled` I2V render went from 701 s to 563 s).
 
+For model-download variables (resume timeouts, retries, workers, SOCKS/xet handling, cache location), see [Downloading weights](#downloading-weights-resume--proxies).
+
 ## Frame Count Reference
 
 The number of frames lives on the `8k + 1` grid (VAE temporal compression 8x); an off-grid request is floored to it with a warning (e.g. 87 → 81). Common values at 24 fps:
@@ -368,6 +370,28 @@ The 2.5 packs carry both the dev and the distilled transformer plus the Gemma-4 
 their size is the download, not what one pipeline loads.
 
 Weights are pre-converted to MLX format by [mlx-forge](https://github.com/dgrauet/mlx-forge).
+
+### Downloading weights (resume & proxies)
+
+The first run downloads the whole pack — up to ~120 GB for the 2.5 bf16 variant — into the HuggingFace cache (`~/.cache/huggingface/hub`). Downloads are **resumable**, so an 80 GB pack does not have to arrive in one sitting:
+
+- **Stalled? Don't kill the process.** After `HF_HUB_DOWNLOAD_TIMEOUT` seconds (default 30) without data, the client reconnects with an HTTP `Range` request and appends to the same `blobs/<sha>.incomplete` file. The project wraps every Hub download in an outer retry loop (`LTX_HF_DOWNLOAD_ATTEMPTS`, default 5) as well.
+- **Killed it anyway? Just rerun the same command.** Each partial file resumes from its current offset via Range; finished files are skipped instantly. The progress bar restarts per run, but the bytes on disk are reused.
+- **SOCKS proxies work** (`all_proxy` / `https_proxy` set to `socks5h://...`, typical of local proxy apps). When a SOCKS proxy is detected, the `hf_xet` Rust backend is automatically disabled in favor of the HTTP backend — xet reports from zero on every restart and can hang indefinitely behind SOCKS, whereas HTTP has read-timeout reconnect and Range resume. Set `LTX_HF_USE_XET=1` to force xet back on.
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `HF_HUB_DOWNLOAD_TIMEOUT` | `30` | Seconds without data before a Range reconnect |
+| `LTX_HF_DOWNLOAD_ATTEMPTS` | `5` | Outer resume attempts around the whole fetch |
+| `LTX_HF_DOWNLOAD_WORKERS` | `4` | Concurrent files (Hub default is 8; lower to `2` on a flaky/shared proxy) |
+| `LTX_HF_USE_XET` | unset | `1` keeps the xet backend even behind SOCKS |
+| `HF_HOME` | `~/.cache/huggingface` | Relocate the cache (e.g. to a larger disk) |
+
+```bash
+# Flaky proxy: fewer parallel files, more resume attempts
+LTX_HF_DOWNLOAD_WORKERS=2 LTX_HF_DOWNLOAD_ATTEMPTS=10 \
+  ltx-2-mlx generate --prompt "A sunset over the ocean" --two-stage -f 97 --frame-rate 24 -o sunset.mp4
+```
 
 ## Packages
 

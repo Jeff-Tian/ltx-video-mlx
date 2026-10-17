@@ -886,7 +886,7 @@ def _resolve_lora_path(path: str) -> str:
         return str(local)
 
     # Try HuggingFace download
-    from huggingface_hub import snapshot_download
+    from ltx_pipelines_mlx.utils.hf_download import snapshot_download
 
     logger.info(f"Downloading LoRA from HuggingFace: {path}")
     repo_dir = Path(snapshot_download(path))

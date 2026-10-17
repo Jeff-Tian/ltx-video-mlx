@@ -140,7 +140,7 @@ def _resolve_model_dir(model_dir: str | Path) -> Path:
     path = Path(model_dir)
     if path.exists():
         return path
-    from huggingface_hub import snapshot_download
+    from ltx_pipelines_mlx.utils.hf_download import snapshot_download
 
     return Path(snapshot_download(str(model_dir)))
 
